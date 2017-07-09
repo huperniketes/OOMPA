@@ -71,7 +71,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_margin="5dp" />
-        <Button android:id="@+id/ejectbutton"
+        <com.huperniketes.oompa.ui.UrlPickerButton android:id="@+id/ejectbutton"
             android:background="@drawable/btn_eject"
             android:layout_width="64dp"
             android:layout_height="64dp"
