@@ -42,7 +42,13 @@ public class MainActivity extends Activity implements OnClickListener {
      */
     final String SUGGESTED_URL = "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg";
 
-    HashMap<Integer, String>	idsToActions = new HashMap<Integer, String>();
+    int	playerIds[] = {
+		R.id.playbutton,
+		R.id.pausebutton,
+		R.id.skipbutton,
+		R.id.rewindbutton,
+		R.id.stopbutton
+	};
 
     Button mEjectButton;
 
@@ -56,16 +62,9 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        idsToActions.put(R.id.playbutton, MusicService.ACTION_PLAY);
-        idsToActions.put(R.id.pausebutton, MusicService.ACTION_PAUSE);
-        idsToActions.put(R.id.skipbutton, MusicService.ACTION_SKIP);
-        idsToActions.put(R.id.rewindbutton, MusicService.ACTION_REWIND);
-        idsToActions.put(R.id.stopbutton, MusicService.ACTION_STOP);
-
-        for (Integer eachId : idsToActions.keySet()) {
+        for (Integer eachId : playerIds) {
 			Button	eachButton = (Button)findViewById(eachId);
 
-			eachButton.setTag(idsToActions.get(eachId));
 			eachButton.setOnClickListener(this);
         }
 
