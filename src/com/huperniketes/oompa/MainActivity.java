@@ -16,8 +16,6 @@
 
 package com.huperniketes.oompa;
 
-import java.util.HashMap;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -42,14 +40,6 @@ public class MainActivity extends Activity implements OnClickListener {
      */
     final String SUGGESTED_URL = "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg";
 
-    int	playerIds[] = {
-		R.id.playbutton,
-		R.id.pausebutton,
-		R.id.skipbutton,
-		R.id.rewindbutton,
-		R.id.stopbutton
-	};
-
     Button mEjectButton;
 
     /**
@@ -62,24 +52,13 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        for (Integer eachId : playerIds) {
-			Button	eachButton = (Button)findViewById(eachId);
-
-			eachButton.setOnClickListener(this);
-        }
-
         mEjectButton = (Button) findViewById(R.id.ejectbutton);
         mEjectButton.setOnClickListener(this);
     }
 
     public void onClick(View target) {
-    	String		action;
     	
-    	// Send the correct intent to the MusicService, according to the button that was clicked
-    	action = (String)target.getTag();
-    	if(action != null)
-            startService(new Intent(action));
-        else if (target == mEjectButton) {
+        if(target == mEjectButton) {
             showUrlDialog();
         }
     }
