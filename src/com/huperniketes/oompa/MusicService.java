@@ -516,7 +516,7 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
         PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
                 new Intent(getApplicationContext(), MainActivity.class),
                 PendingIntent.FLAG_UPDATE_CURRENT);
-        mNotification.setLatestEventInfo(getApplicationContext(), "RandomMusicPlayer", text, pi);
+        mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_title), text, pi);
         mNotificationManager.notify(NOTIFICATION_ID, mNotification);
     }
 
@@ -533,7 +533,7 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
         mNotification.tickerText = text;
         mNotification.icon = R.drawable.ic_stat_playing;
         mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-        mNotification.setLatestEventInfo(getApplicationContext(), "RandomMusicPlayer",
+        mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_title),
                 text, pi);
         startForeground(NOTIFICATION_ID, mNotification);
     }
