@@ -50,7 +50,7 @@ public class UrlPickerButton extends Button implements OnClickListener {
             public void onClick(DialogInterface dlg, int whichButton) {
                 // Send an intent with the URL of the song to play. This is expected by
                 // MusicService.
-                Intent i = new Intent(MusicService.ACTION_URL);
+                Intent i = new Intent(MusicService.ACTION_URL).setClass(getContext(), MusicService.class);
                 Uri uri = Uri.parse(input.getText().toString());
                 i.setData(uri);
                 context.startService(i);
