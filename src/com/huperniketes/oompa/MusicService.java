@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.musicplayer;
+package com.huperniketes.oompa;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -61,13 +61,13 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
     // service can handle are the <action> tags in the <intent-filters> tag for our service in
     // AndroidManifest.xml.
     public static final String ACTION_TOGGLE_PLAYBACK =
-            "com.example.android.musicplayer.action.TOGGLE_PLAYBACK";
-    public static final String ACTION_PLAY = "com.example.android.musicplayer.action.PLAY";
-    public static final String ACTION_PAUSE = "com.example.android.musicplayer.action.PAUSE";
-    public static final String ACTION_STOP = "com.example.android.musicplayer.action.STOP";
-    public static final String ACTION_SKIP = "com.example.android.musicplayer.action.SKIP";
-    public static final String ACTION_REWIND = "com.example.android.musicplayer.action.REWIND";
-    public static final String ACTION_URL = "com.example.android.musicplayer.action.URL";
+            "com.huperniketes.oompa.action.TOGGLE_PLAYBACK";
+    public static final String ACTION_PLAY = "com.huperniketes.oompa.action.PLAY";
+    public static final String ACTION_PAUSE = "com.huperniketes.oompa.action.PAUSE";
+    public static final String ACTION_STOP = "com.huperniketes.oompa.action.STOP";
+    public static final String ACTION_SKIP = "com.huperniketes.oompa.action.SKIP";
+    public static final String ACTION_REWIND = "com.huperniketes.oompa.action.REWIND";
+    public static final String ACTION_URL = "com.huperniketes.oompa.action.URL";
 
     // The volume we set the media player to when we lose audio focus, but are allowed to reduce
     // the volume instead of stopping playback.

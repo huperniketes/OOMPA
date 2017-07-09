@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.musicplayer;
+package com.huperniketes.oompa;
 
 import android.app.Activity;
 import android.app.AlertDialog;

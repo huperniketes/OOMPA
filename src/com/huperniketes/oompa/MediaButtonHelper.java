@@ -1,4 +1,4 @@
-package com.example.android.musicplayer;
+package com.huperniketes.oompa;
 
 import android.content.ComponentName;
 import android.media.AudioManager;
