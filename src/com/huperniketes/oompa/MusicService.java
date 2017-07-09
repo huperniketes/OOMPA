@@ -54,7 +54,7 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
                 PrepareMusicRetrieverTask.MusicRetrieverPreparedListener {
 
     // The tag we put on debug messages
-    final static String TAG = "RandomMusicPlayer";
+    final static String TAG = "OOMusicPlayer";
 
     // These are the Intent actions that we are prepared to handle. Notice that the fact these
     // constants exist in our class is a mere convenience: what really defines the actions our
