@@ -1,5 +1,7 @@
 package com.huperniketes.oompa.ui;
 
+import com.huperniketes.oompa.MusicService;
+
 import android.content.Context;
 import android.content.Intent;
 import android.app.Activity;
@@ -20,6 +22,7 @@ public class PlayerButton extends Button implements OnClickListener {
     	String		action;
 
     	action = (String)getTag();
-        ((Activity)getContext()).startService(new Intent(action));
+        ((Activity)getContext()).startService(new Intent(action).setClass(getContext(), MusicService.class));
+
 	}
 }
