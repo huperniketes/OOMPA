@@ -16,6 +16,8 @@
 
 package com.huperniketes.oompa;
 
+import java.util.HashMap;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -40,11 +42,8 @@ public class MainActivity extends Activity implements OnClickListener {
      */
     final String SUGGESTED_URL = "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg";
 
-    Button mPlayButton;
-    Button mPauseButton;
-    Button mSkipButton;
-    Button mRewindButton;
-    Button mStopButton;
+    HashMap<Integer, String>	idsToActions = new HashMap<Integer, String>();
+
     Button mEjectButton;
 
     /**
@@ -57,33 +56,30 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        mPlayButton = (Button) findViewById(R.id.playbutton);
-        mPauseButton = (Button) findViewById(R.id.pausebutton);
-        mSkipButton = (Button) findViewById(R.id.skipbutton);
-        mRewindButton = (Button) findViewById(R.id.rewindbutton);
-        mStopButton = (Button) findViewById(R.id.stopbutton);
-        mEjectButton = (Button) findViewById(R.id.ejectbutton);
+        idsToActions.put(R.id.playbutton, MusicService.ACTION_PLAY);
+        idsToActions.put(R.id.pausebutton, MusicService.ACTION_PAUSE);
+        idsToActions.put(R.id.skipbutton, MusicService.ACTION_SKIP);
+        idsToActions.put(R.id.rewindbutton, MusicService.ACTION_REWIND);
+        idsToActions.put(R.id.stopbutton, MusicService.ACTION_STOP);
 
-        mPlayButton.setOnClickListener(this);
-        mPauseButton.setOnClickListener(this);
-        mSkipButton.setOnClickListener(this);
-        mRewindButton.setOnClickListener(this);
-        mStopButton.setOnClickListener(this);
+        for (Integer eachId : idsToActions.keySet()) {
+			Button	eachButton = (Button)findViewById(eachId);
+
+			eachButton.setTag(idsToActions.get(eachId));
+			eachButton.setOnClickListener(this);
+        }
+
+        mEjectButton = (Button) findViewById(R.id.ejectbutton);
         mEjectButton.setOnClickListener(this);
     }
 
     public void onClick(View target) {
-        // Send the correct intent to the MusicService, according to the button that was clicked
-        if (target == mPlayButton)
-            startService(new Intent(MusicService.ACTION_PLAY));
-        else if (target == mPauseButton)
-            startService(new Intent(MusicService.ACTION_PAUSE));
-        else if (target == mSkipButton)
-            startService(new Intent(MusicService.ACTION_SKIP));
-        else if (target == mRewindButton)
-            startService(new Intent(MusicService.ACTION_REWIND));
-        else if (target == mStopButton)
-            startService(new Intent(MusicService.ACTION_STOP));
+    	String		action;
+    	
+    	// Send the correct intent to the MusicService, according to the button that was clicked
+    	action = (String)target.getTag();
+    	if(action != null)
+            startService(new Intent(action));
         else if (target == mEjectButton) {
             showUrlDialog();
         }
