@@ -23,8 +23,6 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
@@ -140,9 +138,6 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
     // SDK level >= 14, if they're available.
     RemoteControlClientCompat mRemoteControlClientCompat;
 
-    // Dummy album art we will pass to the remote control (if the APIs are available).
-    Bitmap mDummyAlbumArt;
-
     // The component name of MusicIntentReceiver, for use with media button and remote control
     // APIs
     ComponentName mMediaButtonReceiverComponent;
@@ -197,8 +192,6 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
             mAudioFocusHelper = new AudioFocusHelper(getApplicationContext(), this);
         else
             mAudioFocus = AudioFocus.Focused; // no focus feature, so we always "have" audio focus
-
-        mDummyAlbumArt = BitmapFactory.decodeResource(getResources(), R.drawable.dummy_album_art);
 
         mMediaButtonReceiverComponent = new ComponentName(this, MusicIntentReceiver.class);
     }

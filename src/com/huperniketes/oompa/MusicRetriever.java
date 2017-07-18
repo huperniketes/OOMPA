@@ -20,6 +20,8 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -39,13 +41,18 @@ public class MusicRetriever {
 
     ContentResolver mContentResolver;
 
+    // Dummy album art we will pass to the remote control (if the APIs are available).
+    static Bitmap dummyAlbumArt;
+
     // the items (songs) we have queried
     List<Item> mItems = new ArrayList<Item>();
 
     Random mRandom = new Random();
 
     public MusicRetriever(Context aContext) {
+
         mContentResolver = aContext.getContentResolver();
+        dummyAlbumArt = BitmapFactory.decodeResource(aContext.getResources(), R.drawable.dummy_album_art);
     }
 
     /**
@@ -146,7 +153,7 @@ public class MusicRetriever {
         }
 
         public Bitmap getAlbumArt() {
-        	return null;
+        	return dummyAlbumArt;
         }
 
         public Uri getURI() {
