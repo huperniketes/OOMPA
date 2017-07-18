@@ -83,7 +83,7 @@ public class MusicRetriever {
         int idColumn = cur.getColumnIndex(MediaStore.Audio.Media._ID);
 
         Log.i(TAG, "Title column index: " + String.valueOf(titleColumn));
-        Log.i(TAG, "ID column index: " + String.valueOf(titleColumn));
+        Log.i(TAG, "ID column index: " + String.valueOf(idColumn));
 
         // add each song to mItems
         do {
