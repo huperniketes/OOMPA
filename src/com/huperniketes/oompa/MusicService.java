@@ -447,13 +447,7 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
             // Use the remote control APIs (if available) to set the playback state
 
             if (mRemoteControlClientCompat == null) {
-                Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-                intent.setComponent(mMediaButtonReceiverComponent);
-                mRemoteControlClientCompat = new RemoteControlClientCompat(
-                        PendingIntent.getBroadcast(this /*context*/,
-                                0 /*requestCode, ignored*/, intent /*intent*/, 0 /*flags*/));
-                RemoteControlHelper.registerRemoteControlClient(mAudioManager,
-                        mRemoteControlClientCompat);
+                mRemoteControlClientCompat = new RemoteControlClientCompat(this, mAudioManager, mMediaButtonReceiverComponent);
             }
 
             mRemoteControlClientCompat.setPlaybackState(

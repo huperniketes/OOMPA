@@ -17,7 +17,11 @@
 package com.huperniketes.oompa;
 
 import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.AudioManager;
 import android.os.Looper;
 import android.util.Log;
 
@@ -95,6 +99,26 @@ public class RemoteControlClientCompat {
     }
 
     private Object mActualRemoteControlClient;
+
+    public RemoteControlClientCompat(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
+        if (!sHasRemoteControlAPIs) {
+            return;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+        intent.setComponent(aComponentName);
+    	PendingIntent pendingIntent = PendingIntent.getBroadcast(aContext,
+                    0, intent, 0);
+        try {
+            mActualRemoteControlClient =
+                    sRemoteControlClientClass.getConstructor(PendingIntent.class)
+                            .newInstance(pendingIntent);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        RemoteControlHelper.registerRemoteControlClient(anAudioManager, this);
+    }
 
     public RemoteControlClientCompat(PendingIntent pendingIntent) {
         if (!sHasRemoteControlAPIs) {
