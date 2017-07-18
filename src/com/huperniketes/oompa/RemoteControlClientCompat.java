@@ -22,11 +22,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
+import android.media.RemoteControlClient;
 import android.os.Looper;
 import android.util.Log;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
+import com.huperniketes.oompa.MusicRetriever.Item;
 
 /**
  * RemoteControlClient enables exposing information meant to be consumed by remote controls capable
@@ -370,6 +374,30 @@ public class RemoteControlClientCompat {
             }
         }
     }
+
+	public void playingItem(Item playingItem) {
+		setPlaybackState(
+		        RemoteControlClient.PLAYSTATE_PLAYING);
+	
+		setTransportControlFlags(
+		        RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+		        RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+		        RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+		        RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+	
+		// Update the remote controls
+		editMetadata(true)
+		        .putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingItem.getArtist())
+		        .putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingItem.getAlbum())
+		        .putString(MediaMetadataRetriever.METADATA_KEY_TITLE, playingItem.getTitle())
+		        .putLong(MediaMetadataRetriever.METADATA_KEY_DURATION,
+		                playingItem.getDuration())
+		        // TODO: fetch real item artwork
+		        .putBitmap(
+		                MetadataEditorCompat.METADATA_KEY_ARTWORK,
+		                playingItem.getAlbumArt())
+		        .apply();
+	}
 
     public final Object getActualRemoteControlClientObject() {
         return mActualRemoteControlClient;
