@@ -439,7 +439,7 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
             // Use the remote control APIs (if available) to set the playback state
 
             if (mRemoteControlClientCompat == null) {
-                mRemoteControlClientCompat = new RemoteControlClientCompat(this, mAudioManager, mMediaButtonReceiverComponent);
+                mRemoteControlClientCompat = RemoteControlClientCompat.RemoteControlClient(this, mAudioManager, mMediaButtonReceiverComponent);
             }
 
             mRemoteControlClientCompat.playingItem(playingItem);

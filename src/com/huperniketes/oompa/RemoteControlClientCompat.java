@@ -102,6 +102,10 @@ public class RemoteControlClientCompat {
         return classLoader.loadClass("android.media.RemoteControlClient");
     }
 
+	public static RemoteControlClientCompat RemoteControlClient(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
+		return new RemoteControlClientCompat(aContext, anAudioManager, aComponentName);
+	}
+
     private Object mActualRemoteControlClient;
 
     public RemoteControlClientCompat(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
