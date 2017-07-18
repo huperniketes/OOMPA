@@ -145,6 +145,10 @@ public class MusicRetriever {
             return duration;
         }
 
+        public Bitmap getAlbumArt() {
+        	return null;
+        }
+
         public Uri getURI() {
             return ContentUris.withAppendedId(
                     android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);

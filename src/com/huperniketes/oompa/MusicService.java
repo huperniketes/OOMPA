@@ -469,7 +469,7 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
                     // TODO: fetch real item artwork
                     .putBitmap(
                             RemoteControlClientCompat.MetadataEditorCompat.METADATA_KEY_ARTWORK,
-                            mDummyAlbumArt)
+                            playingItem.getAlbumArt())
                     .apply();
 
             // starts preparing the media player in the background. When it's done, it will call
