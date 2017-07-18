@@ -152,6 +152,101 @@ public class RemoteControlClientCompat {
     }
 
     /**
+     * Creates a {@link android.media.RemoteControlClient.MetadataEditor}.
+     * @param startEmpty Set to false if you want the MetadataEditor to contain the metadata that
+     *     was previously applied to the RemoteControlClient, or true if it is to be created empty.
+     * @return a new MetadataEditor instance.
+     */
+    public MetadataEditorCompat editMetadata(boolean startEmpty) {
+        Object metadataEditor;
+        if (sHasRemoteControlAPIs) {
+            try {
+                metadataEditor = sRCCEditMetadataMethod.invoke(mActualRemoteControlClient,
+                        startEmpty);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            metadataEditor = null;
+        }
+        return new MetadataEditorCompat(metadataEditor);
+    }
+
+    /**
+     * Sets the current playback state.
+     * @param state The current playback state, one of the following values:
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_STOPPED},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_PAUSED},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_PLAYING},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_FAST_FORWARDING},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_REWINDING},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_SKIPPING_FORWARDS},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_SKIPPING_BACKWARDS},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_BUFFERING},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_ERROR}.
+     */
+    public void setPlaybackState(int state) {
+        if (sHasRemoteControlAPIs) {
+            try {
+                sRCCSetPlayStateMethod.invoke(mActualRemoteControlClient, state);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * Sets the flags for the media transport control buttons that this client supports.
+     * @param transportControlFlags A combination of the following flags:
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PREVIOUS},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_REWIND},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PLAY},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PLAY_PAUSE},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PAUSE},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_STOP},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_FAST_FORWARD},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_NEXT}
+     */
+    public void setTransportControlFlags(int transportControlFlags) {
+        if (sHasRemoteControlAPIs) {
+            try {
+                sRCCSetTransportControlFlags.invoke(mActualRemoteControlClient,
+                        transportControlFlags);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+	public void playingItem(Item playingItem) {
+		setPlaybackState(
+		        RemoteControlClient.PLAYSTATE_PLAYING);
+	
+		setTransportControlFlags(
+		        RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+		        RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+		        RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+		        RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+	
+		// Update the remote controls
+		editMetadata(true)
+		        .putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingItem.getArtist())
+		        .putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingItem.getAlbum())
+		        .putString(MediaMetadataRetriever.METADATA_KEY_TITLE, playingItem.getTitle())
+		        .putLong(MediaMetadataRetriever.METADATA_KEY_DURATION,
+		                playingItem.getDuration())
+		        // TODO: fetch real item artwork
+		        .putBitmap(
+		                MetadataEditorCompat.METADATA_KEY_ARTWORK,
+		                playingItem.getAlbumArt())
+		        .apply();
+	}
+
+    public final Object getActualRemoteControlClientObject() {
+        return mActualRemoteControlClient;
+    }
+
+    /**
      * Class used to modify metadata in a {@link android.media.RemoteControlClient} object. Use
      * {@link android.media.RemoteControlClient#editMetadata(boolean)} to create an instance of an
      * editor, on which you set the metadata for the RemoteControlClient instance. Once all the
@@ -306,100 +401,5 @@ public class RemoteControlClientCompat {
                 }
             }
         }
-    }
-
-    /**
-     * Creates a {@link android.media.RemoteControlClient.MetadataEditor}.
-     * @param startEmpty Set to false if you want the MetadataEditor to contain the metadata that
-     *     was previously applied to the RemoteControlClient, or true if it is to be created empty.
-     * @return a new MetadataEditor instance.
-     */
-    public MetadataEditorCompat editMetadata(boolean startEmpty) {
-        Object metadataEditor;
-        if (sHasRemoteControlAPIs) {
-            try {
-                metadataEditor = sRCCEditMetadataMethod.invoke(mActualRemoteControlClient,
-                        startEmpty);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            metadataEditor = null;
-        }
-        return new MetadataEditorCompat(metadataEditor);
-    }
-
-    /**
-     * Sets the current playback state.
-     * @param state The current playback state, one of the following values:
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_STOPPED},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_PAUSED},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_PLAYING},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_FAST_FORWARDING},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_REWINDING},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_SKIPPING_FORWARDS},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_SKIPPING_BACKWARDS},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_BUFFERING},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_ERROR}.
-     */
-    public void setPlaybackState(int state) {
-        if (sHasRemoteControlAPIs) {
-            try {
-                sRCCSetPlayStateMethod.invoke(mActualRemoteControlClient, state);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    /**
-     * Sets the flags for the media transport control buttons that this client supports.
-     * @param transportControlFlags A combination of the following flags:
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PREVIOUS},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_REWIND},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PLAY},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PLAY_PAUSE},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PAUSE},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_STOP},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_FAST_FORWARD},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_NEXT}
-     */
-    public void setTransportControlFlags(int transportControlFlags) {
-        if (sHasRemoteControlAPIs) {
-            try {
-                sRCCSetTransportControlFlags.invoke(mActualRemoteControlClient,
-                        transportControlFlags);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-	public void playingItem(Item playingItem) {
-		setPlaybackState(
-		        RemoteControlClient.PLAYSTATE_PLAYING);
-	
-		setTransportControlFlags(
-		        RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
-		        RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
-		        RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-		        RemoteControlClient.FLAG_KEY_MEDIA_STOP);
-	
-		// Update the remote controls
-		editMetadata(true)
-		        .putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingItem.getArtist())
-		        .putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingItem.getAlbum())
-		        .putString(MediaMetadataRetriever.METADATA_KEY_TITLE, playingItem.getTitle())
-		        .putLong(MediaMetadataRetriever.METADATA_KEY_DURATION,
-		                playingItem.getDuration())
-		        // TODO: fetch real item artwork
-		        .putBitmap(
-		                MetadataEditorCompat.METADATA_KEY_ARTWORK,
-		                playingItem.getAlbumArt())
-		        .apply();
-	}
-
-    public final Object getActualRemoteControlClientObject() {
-        return mActualRemoteControlClient;
     }
 }
