@@ -189,7 +189,7 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
         mAudioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 
         // Create the retriever and start an asynchronous task that will prepare it.
-        mRetriever = new MusicRetriever(getContentResolver());
+        mRetriever = new MusicRetriever(this);
         (new PrepareMusicRetrieverTask(mRetriever,this)).execute();
 
         // create the Audio Focus Helper, if the Audio Focus feature is available (SDK 8 or above)

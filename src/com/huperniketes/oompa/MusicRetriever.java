@@ -18,6 +18,7 @@ package com.huperniketes.oompa;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -43,8 +44,8 @@ public class MusicRetriever {
 
     Random mRandom = new Random();
 
-    public MusicRetriever(ContentResolver cr) {
-        mContentResolver = cr;
+    public MusicRetriever(Context aContext) {
+        mContentResolver = aContext.getContentResolver();
     }
 
     /**
