@@ -54,8 +54,6 @@ public class RemoteControlClientCompat {
     private static Method sRCCSetPlayStateMethod;
     private static Method sRCCSetTransportControlFlags;
 
-    private static boolean sHasRemoteControlAPIs = false;
-
     static {
         try {
             ClassLoader classLoader = RemoteControlClientCompat.class.getClassLoader();
@@ -87,7 +85,6 @@ public class RemoteControlClientCompat {
                     "setTransportControlFlags", int.class);
 
             sCompatClass = RemoteControlClientCompat.class;
-            sHasRemoteControlAPIs = true;
         } catch (ClassNotFoundException e) {
             // Silently fail when running on an OS before ICS.
         } catch (NoSuchMethodException e) {
@@ -126,10 +123,6 @@ public class RemoteControlClientCompat {
 	}
 
     public RemoteControlClientCompat(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
-        if (!sHasRemoteControlAPIs) {
-            return;
-        }
-
         Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
         intent.setComponent(aComponentName);
     	PendingIntent pendingIntent = PendingIntent.getBroadcast(aContext,
@@ -146,9 +139,6 @@ public class RemoteControlClientCompat {
     }
 
     public RemoteControlClientCompat(PendingIntent pendingIntent) {
-        if (!sHasRemoteControlAPIs) {
-            return;
-        }
         try {
             mActualRemoteControlClient =
                     sRemoteControlClientClass.getConstructor(PendingIntent.class)
@@ -159,9 +149,6 @@ public class RemoteControlClientCompat {
     }
 
     public RemoteControlClientCompat(PendingIntent pendingIntent, Looper looper) {
-        if (!sHasRemoteControlAPIs) {
-            return;
-        }
 
         try {
             mActualRemoteControlClient =
@@ -180,16 +167,13 @@ public class RemoteControlClientCompat {
      */
     public MetadataEditorCompat editMetadata(boolean startEmpty) {
         Object metadataEditor;
-        if (sHasRemoteControlAPIs) {
+
             try {
                 metadataEditor = sRCCEditMetadataMethod.invoke(mActualRemoteControlClient,
                         startEmpty);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        } else {
-            metadataEditor = null;
-        }
         return new MetadataEditorCompat(metadataEditor);
     }
 
@@ -207,13 +191,11 @@ public class RemoteControlClientCompat {
      *       {@link android.media.RemoteControlClient#PLAYSTATE_ERROR}.
      */
     public void setPlaybackState(int state) {
-        if (sHasRemoteControlAPIs) {
             try {
                 sRCCSetPlayStateMethod.invoke(mActualRemoteControlClient, state);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }
     }
 
     /**
@@ -229,14 +211,12 @@ public class RemoteControlClientCompat {
      *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_NEXT}
      */
     public void setTransportControlFlags(int transportControlFlags) {
-        if (sHasRemoteControlAPIs) {
             try {
                 sRCCSetTransportControlFlags.invoke(mActualRemoteControlClient,
                         transportControlFlags);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }
     }
 
 	public void playingItem(Item playingItem) {
@@ -291,11 +271,6 @@ public class RemoteControlClientCompat {
         public final static int METADATA_KEY_ARTWORK = 100;
 
         private MetadataEditorCompat(Object actualMetadataEditor) {
-            if (sHasRemoteControlAPIs && actualMetadataEditor == null) {
-                throw new IllegalArgumentException("Remote Control API's exist, " +
-                        "should not be given a null MetadataEditor");
-            }
-            if (sHasRemoteControlAPIs) {
                 Class metadataEditorClass = actualMetadataEditor.getClass();
 
                 try {
@@ -310,7 +285,6 @@ public class RemoteControlClientCompat {
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
             mActualMetadataEditor = actualMetadataEditor;
         }
 
@@ -336,13 +310,11 @@ public class RemoteControlClientCompat {
          *      calls together.
          */
         public MetadataEditorCompat putString(int key, String value) {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mPutStringMethod.invoke(mActualMetadataEditor, key, value);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
             return this;
         }
 
@@ -357,13 +329,11 @@ public class RemoteControlClientCompat {
          * @see android.graphics.Bitmap
          */
         public MetadataEditorCompat putBitmap(int key, Bitmap bitmap) {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mPutBitmapMethod.invoke(mActualMetadataEditor, key, bitmap);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
             return this;
         }
 
@@ -383,13 +353,11 @@ public class RemoteControlClientCompat {
          * @throws IllegalArgumentException
          */
         public MetadataEditorCompat putLong(int key, long value) {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mPutLongMethod.invoke(mActualMetadataEditor, key, value);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
             return this;
         }
 
@@ -398,13 +366,11 @@ public class RemoteControlClientCompat {
          * created with {@link android.media.RemoteControlClient#editMetadata(boolean)}.
          */
         public void clear() {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mClearMethod.invoke(mActualMetadataEditor, (Object[]) null);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
         }
 
         /**
@@ -414,13 +380,11 @@ public class RemoteControlClientCompat {
          * MetadataEditor cannot be reused to edit the RemoteControlClient's metadata.
          */
         public void apply() {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mApplyMethod.invoke(mActualMetadataEditor, (Object[]) null);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
         }
     }
 }

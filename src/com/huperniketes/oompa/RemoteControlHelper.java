@@ -29,8 +29,6 @@ import java.lang.reflect.Method;
 public class RemoteControlHelper {
     private static final String TAG = "RemoteControlHelper";
 
-    private static boolean sHasRemoteControlAPIs = false;
-
     private static Method sRegisterRemoteControlClientMethod;
     private static Method sUnregisterRemoteControlClientMethod;
 
@@ -43,7 +41,6 @@ public class RemoteControlHelper {
                     "registerRemoteControlClient", new Class[]{sRemoteControlClientClass});
             sUnregisterRemoteControlClientMethod = AudioManager.class.getMethod(
                     "unregisterRemoteControlClient", new Class[]{sRemoteControlClientClass});
-            sHasRemoteControlAPIs = true;
         } catch (ClassNotFoundException e) {
             // Silently fail when running on an OS before ICS.
         } catch (NoSuchMethodException e) {
@@ -57,9 +54,6 @@ public class RemoteControlHelper {
 
     public static void registerRemoteControlClient(AudioManager audioManager,
             RemoteControlClientCompat remoteControlClient) {
-        if (!sHasRemoteControlAPIs) {
-            return;
-        }
 
         try {
             sRegisterRemoteControlClientMethod.invoke(audioManager,
@@ -72,9 +66,6 @@ public class RemoteControlHelper {
 
     public static void unregisterRemoteControlClient(AudioManager audioManager,
             RemoteControlClientCompat remoteControlClient) {
-        if (!sHasRemoteControlAPIs) {
-            return;
-        }
 
         try {
             sUnregisterRemoteControlClientMethod.invoke(audioManager,
