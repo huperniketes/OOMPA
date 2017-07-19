@@ -46,6 +46,7 @@ public class RemoteControlClientCompat {
 
     private static final String TAG = "RemoteControlCompat";
 
+	private static Class sCompatClass = NopRemoteControlClient.class;
     private static Class sRemoteControlClientClass;
 
     // RCC short for RemoteControlClient
@@ -85,6 +86,7 @@ public class RemoteControlClientCompat {
             sRCCSetTransportControlFlags = sRemoteControlClientClass.getMethod(
                     "setTransportControlFlags", int.class);
 
+            sCompatClass = RemoteControlClientCompat.class;
             sHasRemoteControlAPIs = true;
         } catch (ClassNotFoundException e) {
             // Silently fail when running on an OS before ICS.
@@ -103,10 +105,25 @@ public class RemoteControlClientCompat {
     }
 
 	public static RemoteControlClientCompat RemoteControlClient(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
-		return new RemoteControlClientCompat(aContext, anAudioManager, aComponentName);
+		RemoteControlClientCompat client;
+
+		try {
+			client = (RemoteControlClientCompat)sCompatClass.getConstructor(Context.class, AudioManager.class, ComponentName.class).newInstance(aContext, anAudioManager, aComponentName);
+		} catch (Exception e) {
+            Log.e(TAG, "Error creating new instance of " + sCompatClass.getName(), e);
+            client = new NopRemoteControlClient();
+		}
+		return client;
 	}
 
     private Object mActualRemoteControlClient;
+
+	/**
+	 * This is only invoked by the NopRemoteControlClient subclass constructors
+	 * and public because Java design are genius.
+	 */
+	public RemoteControlClientCompat() {
+	}
 
     public RemoteControlClientCompat(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
         if (!sHasRemoteControlAPIs) {
@@ -406,4 +423,30 @@ public class RemoteControlClientCompat {
             }
         }
     }
+}
+
+class NopRemoteControlClient extends RemoteControlClientCompat {
+
+	public NopRemoteControlClient() {
+	}
+
+	public NopRemoteControlClient(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
+	}
+
+	@Override
+	public MetadataEditorCompat editMetadata(boolean startEmpty) {
+		return null;
+	}
+
+	@Override
+	public void setPlaybackState(int state) {
+	}
+
+	@Override
+	public void setTransportControlFlags(int transportControlFlags) {
+	}
+
+	@Override
+	public void playingItem(Item playingItem) {
+	}
 }
