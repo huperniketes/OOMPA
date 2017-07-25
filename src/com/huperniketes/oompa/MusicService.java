@@ -410,14 +410,6 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
                 mIsStreaming = false; // playing a locally available song
 
                 playingItem = mRetriever.getRandomItem();
-                if (playingItem == null) {
-                    Toast.makeText(this,
-                            "No available music to play. Place some music on your external storage "
-                            + "device (e.g. your SD card) and try again.",
-                            Toast.LENGTH_LONG).show();
-                    processStopRequest(true); // stop everything!
-                    return;
-                }
 
                 // set the source of the media player a a content URI
                 createMediaPlayerIfNeeded();
@@ -539,14 +531,22 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
     }
 
     public void onMusicRetrieverPrepared() {
-        // Done retrieving!
-        mState = State.Stopped;
 
-        // If the flag indicates we should start playing after retrieving, let's do that now.
-        if (mStartPlayingAfterRetrieve) {
-            tryToGetAudioFocus();
-            playNextSong(mWhatToPlayAfterRetrieve == null ?
-                    null : mWhatToPlayAfterRetrieve.toString());
+    	// Done retrieving!
+        if (mRetriever.getRandomItem() == null) {
+            Toast.makeText(this,
+                    "No available music to play. Place some music on your external storage "
+                    + "device (e.g. your SD card) and try again.",
+                    Toast.LENGTH_LONG).show();
+        } else {
+	        mState = State.Stopped;
+
+	        // If the flag indicates we should start playing after retrieving, let's do that now.
+	        if (mStartPlayingAfterRetrieve) {
+	            tryToGetAudioFocus();
+	            playNextSong(mWhatToPlayAfterRetrieve == null ?
+	                    null : mWhatToPlayAfterRetrieve.toString());
+	        }
         }
     }
 
