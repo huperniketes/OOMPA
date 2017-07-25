@@ -290,11 +290,8 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
     }
 
     void processStopRequest() {
-        processStopRequest(false);
-    }
 
-    void processStopRequest(boolean force) {
-        if (mState == State.Playing || mState == State.Paused || force) {
+    	if (mState == State.Playing || mState == State.Paused) {
             mState = State.Stopped;
 
             // let go of all resources...
