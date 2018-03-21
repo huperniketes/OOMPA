@@ -1,0 +1,5 @@
+OOMPA is a fork of Google's sample music player app in the Android Software Development Kit (SDK). The purpose is to highlight the terrible code originally released, and to show how much better object-orientation is, and why. The code for this fork is at https://bitbucket.org/Huperniketes/oompa, where you can follow as the changes are being made.
+
+This fork fixes bugs, adds a feature or two, but most importantly, this version corrects the horrible, horrible design of Google's original.
+
+The original was a terrible example of an app written in an object-oriented language (Java), because it didn't follow object-oriented design. Navigate through the commits to see the steps taken to correct design deficiencies, improve readability, maintainability, etc, and fix bugs.
