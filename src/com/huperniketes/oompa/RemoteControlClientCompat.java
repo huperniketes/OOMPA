@@ -17,12 +17,20 @@
 package com.huperniketes.oompa;
 
 import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
+import android.media.RemoteControlClient;
 import android.os.Looper;
 import android.util.Log;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
+import com.huperniketes.oompa.MusicRetriever.Item;
 
 /**
  * RemoteControlClient enables exposing information meant to be consumed by remote controls capable
@@ -38,14 +46,13 @@ public class RemoteControlClientCompat {
 
     private static final String TAG = "RemoteControlCompat";
 
+	private static Class sCompatClass = NopRemoteControlClient.class;
     private static Class sRemoteControlClientClass;
 
     // RCC short for RemoteControlClient
     private static Method sRCCEditMetadataMethod;
     private static Method sRCCSetPlayStateMethod;
     private static Method sRCCSetTransportControlFlags;
-
-    private static boolean sHasRemoteControlAPIs = false;
 
     static {
         try {
@@ -77,7 +84,7 @@ public class RemoteControlClientCompat {
             sRCCSetTransportControlFlags = sRemoteControlClientClass.getMethod(
                     "setTransportControlFlags", int.class);
 
-            sHasRemoteControlAPIs = true;
+            sCompatClass = RemoteControlClientCompat.class;
         } catch (ClassNotFoundException e) {
             // Silently fail when running on an OS before ICS.
         } catch (NoSuchMethodException e) {
@@ -94,12 +101,44 @@ public class RemoteControlClientCompat {
         return classLoader.loadClass("android.media.RemoteControlClient");
     }
 
+	public static RemoteControlClientCompat RemoteControlClient(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
+		RemoteControlClientCompat client;
+
+		try {
+			client = (RemoteControlClientCompat)sCompatClass.getConstructor(Context.class, AudioManager.class, ComponentName.class).newInstance(aContext, anAudioManager, aComponentName);
+		} catch (Exception e) {
+            Log.e(TAG, "Error creating new instance of " + sCompatClass.getName(), e);
+            client = new NopRemoteControlClient();
+		}
+		return client;
+	}
+
     private Object mActualRemoteControlClient;
 
-    public RemoteControlClientCompat(PendingIntent pendingIntent) {
-        if (!sHasRemoteControlAPIs) {
-            return;
+	/**
+	 * This is only invoked by the NopRemoteControlClient subclass constructors
+	 * and public because Java design are genius.
+	 */
+	public RemoteControlClientCompat() {
+	}
+
+    public RemoteControlClientCompat(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
+        Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+        intent.setComponent(aComponentName);
+    	PendingIntent pendingIntent = PendingIntent.getBroadcast(aContext,
+                    0, intent, 0);
+        try {
+            mActualRemoteControlClient =
+                    sRemoteControlClientClass.getConstructor(PendingIntent.class)
+                            .newInstance(pendingIntent);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+
+        RemoteControlHelper.registerRemoteControlClient(anAudioManager, this);
+    }
+
+    public RemoteControlClientCompat(PendingIntent pendingIntent) {
         try {
             mActualRemoteControlClient =
                     sRemoteControlClientClass.getConstructor(PendingIntent.class)
@@ -110,9 +149,6 @@ public class RemoteControlClientCompat {
     }
 
     public RemoteControlClientCompat(PendingIntent pendingIntent, Looper looper) {
-        if (!sHasRemoteControlAPIs) {
-            return;
-        }
 
         try {
             mActualRemoteControlClient =
@@ -121,6 +157,94 @@ public class RemoteControlClientCompat {
         } catch (Exception e) {
             Log.e(TAG, "Error creating new instance of " + sRemoteControlClientClass.getName(), e);
         }
+    }
+
+    /**
+     * Creates a {@link android.media.RemoteControlClient.MetadataEditor}.
+     * @param startEmpty Set to false if you want the MetadataEditor to contain the metadata that
+     *     was previously applied to the RemoteControlClient, or true if it is to be created empty.
+     * @return a new MetadataEditor instance.
+     */
+    public MetadataEditorCompat editMetadata(boolean startEmpty) {
+        Object metadataEditor;
+
+            try {
+                metadataEditor = sRCCEditMetadataMethod.invoke(mActualRemoteControlClient,
+                        startEmpty);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        return new MetadataEditorCompat(metadataEditor);
+    }
+
+    /**
+     * Sets the current playback state.
+     * @param state The current playback state, one of the following values:
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_STOPPED},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_PAUSED},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_PLAYING},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_FAST_FORWARDING},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_REWINDING},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_SKIPPING_FORWARDS},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_SKIPPING_BACKWARDS},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_BUFFERING},
+     *       {@link android.media.RemoteControlClient#PLAYSTATE_ERROR}.
+     */
+    public void setPlaybackState(int state) {
+            try {
+                sRCCSetPlayStateMethod.invoke(mActualRemoteControlClient, state);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    }
+
+    /**
+     * Sets the flags for the media transport control buttons that this client supports.
+     * @param transportControlFlags A combination of the following flags:
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PREVIOUS},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_REWIND},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PLAY},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PLAY_PAUSE},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PAUSE},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_STOP},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_FAST_FORWARD},
+     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_NEXT}
+     */
+    public void setTransportControlFlags(int transportControlFlags) {
+            try {
+                sRCCSetTransportControlFlags.invoke(mActualRemoteControlClient,
+                        transportControlFlags);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    }
+
+	public void playingItem(Item playingItem) {
+		setPlaybackState(
+		        RemoteControlClient.PLAYSTATE_PLAYING);
+	
+		setTransportControlFlags(
+		        RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
+		        RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
+		        RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
+		        RemoteControlClient.FLAG_KEY_MEDIA_STOP);
+	
+		// Update the remote controls
+		editMetadata(true)
+		        .putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingItem.getArtist())
+		        .putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingItem.getAlbum())
+		        .putString(MediaMetadataRetriever.METADATA_KEY_TITLE, playingItem.getTitle())
+		        .putLong(MediaMetadataRetriever.METADATA_KEY_DURATION,
+		                playingItem.getDuration())
+		        // TODO: fetch real item artwork
+		        .putBitmap(
+		                MetadataEditorCompat.METADATA_KEY_ARTWORK,
+		                playingItem.getAlbumArt())
+		        .apply();
+	}
+
+    public final Object getActualRemoteControlClientObject() {
+        return mActualRemoteControlClient;
     }
 
     /**
@@ -147,11 +271,6 @@ public class RemoteControlClientCompat {
         public final static int METADATA_KEY_ARTWORK = 100;
 
         private MetadataEditorCompat(Object actualMetadataEditor) {
-            if (sHasRemoteControlAPIs && actualMetadataEditor == null) {
-                throw new IllegalArgumentException("Remote Control API's exist, " +
-                        "should not be given a null MetadataEditor");
-            }
-            if (sHasRemoteControlAPIs) {
                 Class metadataEditorClass = actualMetadataEditor.getClass();
 
                 try {
@@ -166,7 +285,6 @@ public class RemoteControlClientCompat {
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
             mActualMetadataEditor = actualMetadataEditor;
         }
 
@@ -192,13 +310,11 @@ public class RemoteControlClientCompat {
          *      calls together.
          */
         public MetadataEditorCompat putString(int key, String value) {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mPutStringMethod.invoke(mActualMetadataEditor, key, value);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
             return this;
         }
 
@@ -213,13 +329,11 @@ public class RemoteControlClientCompat {
          * @see android.graphics.Bitmap
          */
         public MetadataEditorCompat putBitmap(int key, Bitmap bitmap) {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mPutBitmapMethod.invoke(mActualMetadataEditor, key, bitmap);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
             return this;
         }
 
@@ -239,13 +353,11 @@ public class RemoteControlClientCompat {
          * @throws IllegalArgumentException
          */
         public MetadataEditorCompat putLong(int key, long value) {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mPutLongMethod.invoke(mActualMetadataEditor, key, value);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
             return this;
         }
 
@@ -254,13 +366,11 @@ public class RemoteControlClientCompat {
          * created with {@link android.media.RemoteControlClient#editMetadata(boolean)}.
          */
         public void clear() {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mClearMethod.invoke(mActualMetadataEditor, (Object[]) null);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
         }
 
         /**
@@ -270,84 +380,37 @@ public class RemoteControlClientCompat {
          * MetadataEditor cannot be reused to edit the RemoteControlClient's metadata.
          */
         public void apply() {
-            if (sHasRemoteControlAPIs) {
                 try {
                     mApplyMethod.invoke(mActualMetadataEditor, (Object[]) null);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
-            }
         }
     }
+}
 
-    /**
-     * Creates a {@link android.media.RemoteControlClient.MetadataEditor}.
-     * @param startEmpty Set to false if you want the MetadataEditor to contain the metadata that
-     *     was previously applied to the RemoteControlClient, or true if it is to be created empty.
-     * @return a new MetadataEditor instance.
-     */
-    public MetadataEditorCompat editMetadata(boolean startEmpty) {
-        Object metadataEditor;
-        if (sHasRemoteControlAPIs) {
-            try {
-                metadataEditor = sRCCEditMetadataMethod.invoke(mActualRemoteControlClient,
-                        startEmpty);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            metadataEditor = null;
-        }
-        return new MetadataEditorCompat(metadataEditor);
-    }
+class NopRemoteControlClient extends RemoteControlClientCompat {
 
-    /**
-     * Sets the current playback state.
-     * @param state The current playback state, one of the following values:
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_STOPPED},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_PAUSED},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_PLAYING},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_FAST_FORWARDING},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_REWINDING},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_SKIPPING_FORWARDS},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_SKIPPING_BACKWARDS},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_BUFFERING},
-     *       {@link android.media.RemoteControlClient#PLAYSTATE_ERROR}.
-     */
-    public void setPlaybackState(int state) {
-        if (sHasRemoteControlAPIs) {
-            try {
-                sRCCSetPlayStateMethod.invoke(mActualRemoteControlClient, state);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+	public NopRemoteControlClient() {
+	}
 
-    /**
-     * Sets the flags for the media transport control buttons that this client supports.
-     * @param transportControlFlags A combination of the following flags:
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PREVIOUS},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_REWIND},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PLAY},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PLAY_PAUSE},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_PAUSE},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_STOP},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_FAST_FORWARD},
-     *      {@link android.media.RemoteControlClient#FLAG_KEY_MEDIA_NEXT}
-     */
-    public void setTransportControlFlags(int transportControlFlags) {
-        if (sHasRemoteControlAPIs) {
-            try {
-                sRCCSetTransportControlFlags.invoke(mActualRemoteControlClient,
-                        transportControlFlags);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+	public NopRemoteControlClient(Context aContext, AudioManager anAudioManager, ComponentName aComponentName) {
+	}
 
-    public final Object getActualRemoteControlClientObject() {
-        return mActualRemoteControlClient;
-    }
+	@Override
+	public MetadataEditorCompat editMetadata(boolean startEmpty) {
+		return null;
+	}
+
+	@Override
+	public void setPlaybackState(int state) {
+	}
+
+	@Override
+	public void setTransportControlFlags(int transportControlFlags) {
+	}
+
+	@Override
+	public void playingItem(Item playingItem) {
+	}
 }

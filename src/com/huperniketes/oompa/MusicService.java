@@ -23,10 +23,7 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
@@ -140,9 +137,6 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
     // SDK level >= 14, if they're available.
     RemoteControlClientCompat mRemoteControlClientCompat;
 
-    // Dummy album art we will pass to the remote control (if the APIs are available).
-    Bitmap mDummyAlbumArt;
-
     // The component name of MusicIntentReceiver, for use with media button and remote control
     // APIs
     ComponentName mMediaButtonReceiverComponent;
@@ -189,7 +183,7 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
         mAudioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 
         // Create the retriever and start an asynchronous task that will prepare it.
-        mRetriever = new MusicRetriever(getContentResolver());
+        mRetriever = new MusicRetriever(this);
         (new PrepareMusicRetrieverTask(mRetriever,this)).execute();
 
         // create the Audio Focus Helper, if the Audio Focus feature is available (SDK 8 or above)
@@ -197,8 +191,6 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
             mAudioFocusHelper = new AudioFocusHelper(getApplicationContext(), this);
         else
             mAudioFocus = AudioFocus.Focused; // no focus feature, so we always "have" audio focus
-
-        mDummyAlbumArt = BitmapFactory.decodeResource(getResources(), R.drawable.dummy_album_art);
 
         mMediaButtonReceiverComponent = new ComponentName(this, MusicIntentReceiver.class);
     }
@@ -298,11 +290,8 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
     }
 
     void processStopRequest() {
-        processStopRequest(false);
-    }
 
-    void processStopRequest(boolean force) {
-        if (mState == State.Playing || mState == State.Paused || force) {
+    	if (mState == State.Playing || mState == State.Paused) {
             mState = State.Stopped;
 
             // let go of all resources...
@@ -418,14 +407,6 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
                 mIsStreaming = false; // playing a locally available song
 
                 playingItem = mRetriever.getRandomItem();
-                if (playingItem == null) {
-                    Toast.makeText(this,
-                            "No available music to play. Place some music on your external storage "
-                            + "device (e.g. your SD card) and try again.",
-                            Toast.LENGTH_LONG).show();
-                    processStopRequest(true); // stop everything!
-                    return;
-                }
 
                 // set the source of the media player a a content URI
                 createMediaPlayerIfNeeded();
@@ -447,36 +428,10 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
             // Use the remote control APIs (if available) to set the playback state
 
             if (mRemoteControlClientCompat == null) {
-                Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-                intent.setComponent(mMediaButtonReceiverComponent);
-                mRemoteControlClientCompat = new RemoteControlClientCompat(
-                        PendingIntent.getBroadcast(this /*context*/,
-                                0 /*requestCode, ignored*/, intent /*intent*/, 0 /*flags*/));
-                RemoteControlHelper.registerRemoteControlClient(mAudioManager,
-                        mRemoteControlClientCompat);
+                mRemoteControlClientCompat = RemoteControlClientCompat.RemoteControlClient(this, mAudioManager, mMediaButtonReceiverComponent);
             }
 
-            mRemoteControlClientCompat.setPlaybackState(
-                    RemoteControlClient.PLAYSTATE_PLAYING);
-
-            mRemoteControlClientCompat.setTransportControlFlags(
-                    RemoteControlClient.FLAG_KEY_MEDIA_PLAY |
-                    RemoteControlClient.FLAG_KEY_MEDIA_PAUSE |
-                    RemoteControlClient.FLAG_KEY_MEDIA_NEXT |
-                    RemoteControlClient.FLAG_KEY_MEDIA_STOP);
-
-            // Update the remote controls
-            mRemoteControlClientCompat.editMetadata(true)
-                    .putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, playingItem.getArtist())
-                    .putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, playingItem.getAlbum())
-                    .putString(MediaMetadataRetriever.METADATA_KEY_TITLE, playingItem.getTitle())
-                    .putLong(MediaMetadataRetriever.METADATA_KEY_DURATION,
-                            playingItem.getDuration())
-                    // TODO: fetch real item artwork
-                    .putBitmap(
-                            RemoteControlClientCompat.MetadataEditorCompat.METADATA_KEY_ARTWORK,
-                            mDummyAlbumArt)
-                    .apply();
+            mRemoteControlClientCompat.playingItem(playingItem);
 
             // starts preparing the media player in the background. When it's done, it will call
             // our OnPreparedListener (that is, the onPrepared() method on this class, since we set
@@ -573,14 +528,22 @@ public class MusicService extends Service implements OnCompletionListener, OnPre
     }
 
     public void onMusicRetrieverPrepared() {
-        // Done retrieving!
-        mState = State.Stopped;
 
-        // If the flag indicates we should start playing after retrieving, let's do that now.
-        if (mStartPlayingAfterRetrieve) {
-            tryToGetAudioFocus();
-            playNextSong(mWhatToPlayAfterRetrieve == null ?
-                    null : mWhatToPlayAfterRetrieve.toString());
+    	// Done retrieving!
+        if (mRetriever.getRandomItem() == null) {
+            Toast.makeText(this,
+                    "No available music to play. Place some music on your external storage "
+                    + "device (e.g. your SD card) and try again.",
+                    Toast.LENGTH_LONG).show();
+        } else {
+	        mState = State.Stopped;
+
+	        // If the flag indicates we should start playing after retrieving, let's do that now.
+	        if (mStartPlayingAfterRetrieve) {
+	            tryToGetAudioFocus();
+	            playNextSong(mWhatToPlayAfterRetrieve == null ?
+	                    null : mWhatToPlayAfterRetrieve.toString());
+	        }
         }
     }
 
