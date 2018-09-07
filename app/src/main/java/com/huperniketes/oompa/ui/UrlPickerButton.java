@@ -19,7 +19,7 @@ public class UrlPickerButton extends Button implements OnClickListener {
      * The URL we suggest as default when adding by URL. This is just so that the user doesn't
      * have to find an URL to test this sample.
      */
-    final String SUGGESTED_URL = "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg";
+    final String SUGGESTED_URL = "https://archive.org/13/items/kahvi037/kahvi037_epoq-lepidoptera.mp3";
 
 	public UrlPickerButton(Context context, AttributeSet attrs) {
 		super(context, attrs);
